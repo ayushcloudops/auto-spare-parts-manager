@@ -1,0 +1,21 @@
+# Build outputs (compiled app, exe, packaged bundles)
+build/bin
+
+# Dependencies
+node_modules
+
+# Frontend build output
+frontend/dist
+
+# Local database / runtime data (should never be committed)
+*.db
+*.db-shm
+*.db-wal
+receipts/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log

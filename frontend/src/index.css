@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global base styles. Light/dark surfaces are driven by the `dark` class on
+   <html>; every component opts into dark variants with `dark:` utilities. */
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    @apply bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-100;
+    font-family: theme("fontFamily.sans");
+  }
+
+  /* Thin, unobtrusive scrollbars suit a dense business UI. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded bg-slate-300 dark:bg-slate-700;
+  }
+}
+
+/* Reusable component classes kept small; most styling stays inline via utilities. */
+@layer components {
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900;
+  }
+}
