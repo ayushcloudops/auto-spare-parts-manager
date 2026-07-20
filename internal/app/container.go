@@ -40,6 +40,7 @@ type Container struct {
 	Dashboard *DashboardHandler
 	Settings  *SettingsHandler
 	Print     *PrintHandler
+	Demo      *DemoHandler
 }
 
 // Bootstrap opens the database, applies migrations and seed data, and assembles
@@ -81,6 +82,7 @@ func Bootstrap() (*Container, error) {
 	settingsSvc := service.NewSettingsService(settingsRepo)
 	reportsSvc := service.NewReportsService(reportsRepo, productRepo, invoiceRepo)
 	dashboardSvc := service.NewDashboardService(invoiceRepo, productRepo, customerRepo)
+	demoSvc := service.NewDemoService(productSvc, customerSvc, supplierSvc, billingSvc, settingsSvc)
 
 	c := &Container{
 		DB:        db,
@@ -95,6 +97,7 @@ func Bootstrap() (*Container, error) {
 		Dashboard: NewDashboardHandler(dashboardSvc),
 		Settings:  NewSettingsHandler(settingsSvc),
 		Print:     NewPrintHandler(invoiceRepo, settingsRepo, printer.New()),
+		Demo:      NewDemoHandler(demoSvc),
 	}
 
 	return c, nil
@@ -115,6 +118,7 @@ func (c *Container) Handlers() []interface{} {
 		c.Dashboard,
 		c.Settings,
 		c.Print,
+		c.Demo,
 	}
 }
 

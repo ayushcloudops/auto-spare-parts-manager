@@ -863,6 +863,24 @@ export namespace service {
 		    return a;
 		}
 	}
+	export class DemoSummary {
+	    products: number;
+	    customers: number;
+	    suppliers: number;
+	    invoices: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new DemoSummary(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.products = source["products"];
+	        this.customers = source["customers"];
+	        this.suppliers = source["suppliers"];
+	        this.invoices = source["invoices"];
+	    }
+	}
 
 }
 
