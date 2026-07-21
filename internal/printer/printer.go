@@ -18,27 +18,51 @@ type Printer interface {
 
 // New returns the best available Printer for the current OS.
 //
-// macOS/Linux: pipes raw ESC/POS to the CUPS `lp` command.
+// macOS/Linux: pipes raw ESC/POS to the CUPS `lp` command, and on ANY failure
+// (lp missing, no printer configured, printer offline) falls back to saving the
+// receipt to a file so it is never lost.
 // Windows: raw spooling via the print API (winspool WritePrinter) is the
 // intended implementation and slots in here without touching callers; until it
 // is added, the file fallback records each receipt so nothing is lost.
 func New() Printer {
 	switch runtime.GOOS {
 	case "linux", "darwin":
-		return &lpPrinter{}
+		return newLPPrinter()
 	default:
 		return &filePrinter{}
 	}
 }
 
-// lpPrinter pipes bytes to CUPS `lp -o raw`. Falls back to a file if lp is
-// missing (e.g. a machine with no printer configured).
-type lpPrinter struct{}
+// lpPrinter prints via CUPS `lp`, with a file fallback. The `run` and `fallback`
+// fields are injectable so the fallback behaviour can be unit-tested without a
+// real printer.
+type lpPrinter struct {
+	run      func(data []byte, printerName string) error
+	fallback Printer
+}
 
+func newLPPrinter() *lpPrinter {
+	return &lpPrinter{run: runLP, fallback: &filePrinter{}}
+}
+
+// Print attempts to print; if that fails for ANY reason it saves the raw receipt
+// to a file so nothing is ever lost. It only returns an error if even the file
+// fallback fails.
 func (p *lpPrinter) Print(data []byte, printerName string) error {
+	if err := p.run(data, printerName); err != nil {
+		// Printing failed (no printer, offline, lp missing…). Don't lose the
+		// receipt — persist it to the receipts folder instead.
+		return p.fallback.Print(data, printerName)
+	}
+	return nil
+}
+
+// runLP pipes the bytes to CUPS `lp -o raw`. Returns an error if lp is
+// unavailable or the print job is rejected (e.g. no destination configured).
+func runLP(data []byte, printerName string) error {
 	lp, err := exec.LookPath("lp")
 	if err != nil {
-		return (&filePrinter{}).Print(data, printerName)
+		return err
 	}
 	args := []string{"-o", "raw"}
 	if printerName != "" {
@@ -54,9 +78,11 @@ func (p *lpPrinter) Print(data []byte, printerName string) error {
 	}
 	if _, err := stdin.Write(data); err != nil {
 		_ = stdin.Close()
+		_ = cmd.Wait()
 		return err
 	}
 	if err := stdin.Close(); err != nil {
+		_ = cmd.Wait()
 		return err
 	}
 	return cmd.Wait()
