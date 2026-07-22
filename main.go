@@ -32,6 +32,11 @@ func main() {
 		Title:  "Auto Spare Parts Manager",
 		Width:  1280,
 		Height: 800,
+		// Open maximised (fills the screen) but stay a normal, resizable window.
+		WindowStartState: options.Maximised,
+		// Don't let it be shrunk so small the layout breaks.
+		MinWidth:  1024,
+		MinHeight: 700,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
